@@ -69,7 +69,29 @@ namespace Flashcards_api.Controllers
             }
             else if(rowsAffected > 0)
             {
-                return Ok();
+                string queryCreate = $"CREATE TABLE `wordset_{set.Name}` (id INT AUTO_INCREMENT PRIMARY KEY, word VARCHAR(255), definition VARCHAR(255))";
+                int rowsAffectedCreate = await db.CreateTable(queryCreate);
+
+                if(rowsAffectedCreate == -1)
+                {
+                    return Conflict("Table creation failed");
+                }
+                else if(rowsAffectedCreate == -2)
+                {
+                    return Conflict("Table already exists");
+                }
+                else if(rowsAffectedCreate == -3)
+                {
+                    return Conflict("Error opening connection to database");
+                }
+                else if(rowsAffectedCreate > 0)
+                {
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest();
+                }
             }
             else
             {
@@ -77,6 +99,65 @@ namespace Flashcards_api.Controllers
             }
         }
 
+        [HttpDelete(Name = "DeleteSet")]
+        public async Task<IActionResult> Delete(string setName)
+        {
+            if(setName == null || setName == "")
+            {
+                return BadRequest("No set provided");
+            }
+            else
+            {
+                DatabaseConnection db = new DatabaseConnection();
+                string query = $"DELETE FROM sets where name = '{setName}'";
+                int rowsAffected = await db.Delete(query);
+
+                if(rowsAffected == -1)
+                {
+                    return Conflict("Delete failed");
+                }
+                else if(rowsAffected == -2)
+                {
+                    return Conflict("Set does not exist");
+                }
+                else if(rowsAffected == -3)
+                {
+                    return Conflict("Error opening connection to database");
+                }
+                else if(rowsAffected > 0)
+                {
+                    string queryDrop = $"DROP TABLE `wordset_{setName}`";
+                    int rowsAffectedDrop = await db.DropTable(queryDrop);
+                    
+                    if(rowsAffectedDrop == -1)
+                    {
+                        return Conflict("Table deletion failed");
+                    }
+                    else if(rowsAffectedDrop == -2)
+                    {
+                        return Conflict("Table set not exist, set name deletion successfull");
+                    }
+                    else if(rowsAffectedDrop == -3)
+                    {
+                        return Conflict("Error opening connection to database");
+                    }
+                    else if(rowsAffectedDrop == 0)
+                    {
+                        return Ok();
+                    }
+                    else
+                    {
+                        return BadRequest();
+                    }
+                    
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+        }
+        
 
     }
 }

@@ -146,7 +146,29 @@ namespace Flashcards_api.Controllers
                 }
                 else if(rowsAffected == 0)
                 {
-                    return Ok();
+                    string queryUpdate = $"DELETE FROM sets WHERE name = `{wordSetName}`";
+                    int rowsAffectedUpdate = await db.Update(queryUpdate);
+
+                    if(rowsAffectedUpdate == -1)
+                    {
+                        return Conflict("Update failed");
+                    }
+                    else if(rowsAffected == -2)
+                    {
+                        return Conflict("Duplicate entry");
+                    }
+                    else if(rowsAffectedUpdate == -3)
+                    {
+                        return Conflict("Error opening connection to database");
+                    }
+                    else if(rowsAffectedUpdate > 0)
+                    {
+                        return Ok();
+                    }
+                    else
+                    {
+                        return Conflict("Table not found! Table could be deleted earlier");
+                    }
                 }
                 else
                 {

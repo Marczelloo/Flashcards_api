@@ -148,43 +148,16 @@ namespace Flashcards_api.Controllers
             return -3;
         }
 
-        public void Update(string query)
+        public async Task<int> Update(string query)
         {
-            if(this.OpenConnection() == true)
-            {
-                try
-                {
-                    MySqlCommand cmd = new MySqlCommand();
-                    cmd.CommandText = query;
-                    cmd.Connection = connection;
-                    int rowsAffected = cmd.ExecuteNonQuery();
-                    if(rowsAffected > 0)
-                    {
-                        Console.WriteLine("Rows affected: " + rowsAffected);
-                    }
-                    else
-                    {
-                        Console.WriteLine("No rows affected");
-                    }
-
-                    this.CloseConnection();
-                }
-                catch(MySqlException ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-            }
-        }
-
-        public void Delete(string query)
-        {
-            if(this.OpenConnection() == true)
+            if (this.OpenConnection() == true)
             {
                 try
                 {
                     MySqlCommand cmd = new MySqlCommand(query, connection);
-                    int rowsAffected = cmd.ExecuteNonQuery();
-                    if(rowsAffected > 0)
+                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                    if (rowsAffected > 0)
                     {
                         Console.WriteLine("Rows affected: " + rowsAffected);
                     }
@@ -194,12 +167,69 @@ namespace Flashcards_api.Controllers
                     }
 
                     this.CloseConnection();
+                    return rowsAffected;
                 }
-                catch(MySqlException ex)
+                catch (MySqlException ex)
                 {
                     Console.WriteLine(ex.Message);
+
+                    if (ex.Number == 1062)
+                    {
+                        Console.WriteLine("Duplicate entry");
+                        return -2;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Update failed");
+                        return -1;
+                    }
                 }
+
             }
+
+            return -3;
+        }
+
+        public async Task<int> Delete(string query)
+        {
+            if (this.OpenConnection() == true)
+            {
+                try
+                {
+                    MySqlCommand cmd = new MySqlCommand(query, connection);
+                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                    if (rowsAffected > 0)
+                    {
+                        Console.WriteLine("Rows affected: " + rowsAffected);
+                    }
+                    else
+                    {
+                        Console.WriteLine("No rows affected");
+                    }
+
+                    this.CloseConnection();
+                    return rowsAffected;
+                }
+                catch (MySqlException ex)
+                {
+                    Console.WriteLine(ex.Message);
+
+                    if (ex.Number == 1062)
+                    {                        
+                        Console.WriteLine("Duplicate entry");
+                        return -2;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Delete failed");
+                        return -1;
+                    }
+                }
+
+            }
+
+            return -3;
         }
 
         public async Task<int> CreateTable(string query)
